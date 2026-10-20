@@ -87,7 +87,7 @@ field(id,"Tamanho sugerido",'<select data-key="hintSize"><option value="0">Escol
 '<div class="actions"><button class="btn primary" data-action="png" disabled>↓ Salvar PNG</button><button class="btn" data-action="pdf" disabled>▤ Salvar PDF</button></div>'+
 '</div></article>';}
 function field(id,title,control){return '<div class="field"><label>'+title+'</label>'+control+'</div>';}
-function mount(){const workspace=$("workspace");workspace.classList.toggle("duo",mode==="duo");workspace.innerHTML=boards.slice(0,mode==="duo"?2:1).map(panelMarkup).join("");for(let b of boards.slice(0,mode==="duo"?2:1)){wire(b);sync(b);if(b.img) {refresh(b);}else renderEmpty(b);} $("solo").classList.toggle("active",mode==="solo");$("duo").classList.toggle("active",mode==="duo");}
+function mount(){const workspace=$("workspace");workspace.classList.toggle("duo",mode==="duo");workspace.innerHTML=boards.slice(0,mode==="duo"?2:1).map(panelMarkup).join("");for(let b of boards.slice(0,mode==="duo"?2:1)){wire(b);sync(b);if(b.img) {refresh(b);drawCutoutPreview(b);}else renderEmpty(b);} $("solo").classList.toggle("active",mode==="solo");$("duo").classList.toggle("active",mode==="duo");}
 function wire(b){const parent=$("panel-"+b.index);
 $("file-"+b.index).addEventListener("change",e=>loadImage(b,e.target.files?.[0]));
 parent.querySelectorAll("[data-key]").forEach(el=>el.addEventListener("change",()=>{
