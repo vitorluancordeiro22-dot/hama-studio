@@ -1,0 +1,26 @@
+name: Verificar Nosso Mundinho
+on:
+  push:
+    branches: [main]
+  pull_request:
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Obter código
+        uses: actions/checkout@11bd71901bbe5b163ceea73d27597364c9af683
+      - name: Checar motor de pixel art
+        run: node --check pixel-engine.js
+      - name: Checar JavaScript do editor
+        run: |
+          node - <<'NODE'
+          const fs = require('node:fs');
+          const html = fs.readFileSync('index.html', 'utf8');
+          const scripts = [...html.matchAll(/<script>([\s\S]*?)<\/script>/g)];
+          if (!scripts.length) throw new Error('Editor sem script');
+          for (const [, content] of scripts) new Function(content);
+          if (!html.includes('pixel-engine.js')) throw new Error('Motor não conectado');
+          console.log('JavaScript válido e motor conectado.');
+          NODE
