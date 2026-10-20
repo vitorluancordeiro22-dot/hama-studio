@@ -23,6 +23,10 @@ function cropSource(board){
 function removeConnectedBackground(src,tolerance){
  const w=src.width,h=src.height,ctx=src.getContext("2d",{willReadFrequently:true});
  const frame=ctx.getImageData(0,0,w,h),d=frame.data;
+// PNGs recortados já têm transparência; não apague traços escuros próximos da borda.
+let transparentCorners=0;
+for(const [x,y] of [[1,1],[w-2,1],[1,h-2],[w-2,h-2]])if(d[(y*w+x)*4+3]<110)transparentCorners++;
+if(transparentCorners>=2)return src;
  const pick=(x,y)=>{let n=4*(y*w+x);return [d[n],d[n+1],d[n+2]];};
  const corners=[[1,1],[w-2,1],[1,h-2],[w-2,h-2]].map(([x,y])=>pick(x,y));
  let best=0,bestVotes=-1;for(let i=0;i<4;i++){let votes=0;for(let j=0;j<4;j++)if(dist(corners[i],corners[j])<45)votes++;if(votes>bestVotes){best=i;bestVotes=votes;}}
@@ -86,7 +90,7 @@ function process(board){
   let r=rs/count,g=gs/count,b=bs/count;
   const fraction=black/count;
   // Fios e linhas pretas originais recebem prioridade para não virar cinza.
-  const preserveDark=fraction>=(isSticker?.14:isCute?.21:.29)&&black>=5;
+  const preserveDark=fraction>=(isSticker ? .14 : (isCute ? .21 : .29))&&black>=5;
   if(preserveDark){r=rr/black;g=gg/black;b=bb/black;}
   // Em vez de usar somente uma média que mistura duas regiões,
   // usa-se a mediana cromática local, quando há contraste forte.
