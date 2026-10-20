@@ -31,7 +31,7 @@ dialog{border:1px solid #edd9df;border-radius:24px;background:#fffaf9;padding:30
 @media(max-width:480px){header{padding:18px}main{padding:0 13px 45px}.header-note{display:none}.hero h1{font-size:42px}.panel-body{padding:16px}.panel-head{padding:18px}.fields{gap:9px}.preview{min-height:220px}.modebar button{padding:10px 16px}.hero p{font-size:13px}}
 @media print{header,.hero,.modebar,.upload,.fields,.extra-settings,.sizes,.actions,.utility,.footer,.boardhint,dialog{display:none!important}body{background:#fff}.panel{border:none;box-shadow:none;break-inside:avoid}.workspace.duo{grid-template-columns:1fr 1fr}.preview{background:#fff;min-height:0}.board{max-height:70vh}}
 .advanced{margin:16px 0 2px;padding:15px;border:1px solid #f0dfe5;border-radius:17px;background:linear-gradient(125deg,#fff8fa,#fffdfa)}.advanced-title{font-size:13px;font-weight:800;color:#8b5268}.advanced-caption{font-size:11px;color:#a98a96;line-height:1.55;margin:6px 0}.advanced .fields{margin-top:12px}.crop{margin-top:12px;border-top:1px solid #f1e1e7;padding-top:10px}.crop summary{cursor:pointer;color:#9c6a7e;font-size:11px;font-weight:800}.crop-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}.crop-grid label{display:block;color:#a2818d;font-size:11px}.crop-grid input{width:100%;accent-color:#c77a96}.smallpreview{display:flex;align-items:center;gap:13px;padding:11px;border:1px solid #f0dfe5;border-radius:14px;margin-top:15px;background:#fffafc}.smallpreview canvas{width:80px;height:80px;object-fit:contain;background:repeating-conic-gradient(#f4e8ed 0 25%,#fff 0 50%) 50%/14px 14px;border-radius:10px}.smallpreview b{display:block;color:#8e5b70;font-size:12px}.smallpreview small{display:block;color:#ae8997;font-size:10px;line-height:1.5;margin:5px 0}.smallpreview .btn{padding:8px 12px;flex:none;font-size:10px}.smallpreview[hidden]{display:none}.field-tip{font-size:10px;color:#b4939e;line-height:1.35}@media(max-width:380px){.smallpreview canvas{width:65px;height:65px}}
-</style>
+.size-goal{margin-top:15px;padding:14px 15px;border:1px solid #f1dbe4;background:linear-gradient(135deg,#fff1f5,#fffaf9);border-radius:15px;color:#926778;font-size:11px;line-height:1.5}.size-goal-title{font-weight:800;color:#a45776;font-size:12px;margin-bottom:6px}.size-explain{font-weight:700;color:#88576d}.size-advice{margin-top:5px}.footprint{margin-top:8px;font-weight:700;color:#ab6282}.custom-cm{display:block;margin:9px 0;color:#955e76;font-weight:700}.custom-cm[hidden]{display:none}.custom-cm input{max-width:74px;padding:7px;border-radius:9px;border:1px solid #e8c1d0;color:#824d64;background:#fff}</style>
 </head>
 <body>
 <header><div class="brand"><div class="logo">♥</div><div>nosso mundinho<div class="micro" style="font-size:9px;letter-spacing:.09em;margin-top:2px">MARIA & VÍTOR</div></div></div><div class="header-note">feito de amor e miçanguinhas ✿</div></header>
@@ -50,14 +50,16 @@ const $=id=>document.getElementById(id);
 const clamp=(v,lo,hi)=>Math.max(lo,Math.min(hi,v));
 const boards=[makeBoard(0),makeBoard(1)];
 let mode="solo", toastTimer;
-function makeBoard(index){return {index,img:null,imgName:"",url:null,w:29,h:29,bead:5,customBead:5,k:16,zoom:1,grid:true,beads:true,erase:true,bgTolerance:55,autoCrop:true,style:"fofinho",paletteMode:"original",outline:true,cleanup:true,shiftX:0,shiftY:0,cropTop:0,cropBottom:0,cropLeft:0,cropRight:0,cutout:null,tool:"mark",pixels:[],done:new Set(),palette:[],drawSize:16,signature:0};}
+function makeBoard(index){return {index,img:null,imgName:"",url:null,w:16,h:16,sizeMode:"physical",targetCm:8,customCm:8,bead:5,customBead:5,k:16,zoom:1,grid:true,beads:true,erase:true,bgTolerance:55,autoCrop:true,style:"fofinho",paletteMode:"original",outline:true,cleanup:true,shiftX:0,shiftY:0,cropTop:0,cropBottom:0,cropLeft:0,cropRight:0,cutout:null,tool:"mark",pixels:[],done:new Set(),palette:[],drawSize:16,signature:0};}
 function message(t){const el=$("toast");el.textContent=t;el.classList.add("show");clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.classList.remove("show"),3000);}
 function escapeText(t){return String(t).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
 function panelMarkup(b){const id=b.index;return '<article class="panel" id="panel-'+id+'">'+
 '<div class="panel-head"><div class="number">0'+(id+1)+'</div><div class="panel-title"><strong>'+(id===0?"Nossa primeira arte":"Nossa segunda arte")+'</strong><small>'+(id===0?"Um pedacinho do nosso mundo":"Mais um momento pra guardar")+'</small></div><span class="love-icon">♡</span></div>'+
 '<div class="panel-body"><label class="upload" for="file-'+id+'"><span class="upload-ico">↥</span><span class="upload-text"><b id="file-name-'+id+'">Escolher uma fotinha</b><small>JPG, PNG ou WEBP · toque para enviar</small></span><img alt="Prévia da foto" class="thumb" id="thumb-'+id+'"><input type="file" id="file-'+id+'" accept="image/png,image/jpeg,image/webp,image/*"></label>'+
 '<div class="fields">'+
-field(id,"Tamanho do molde",'<select data-key="size"><option value="15">15 × 15</option><option value="20">20 × 20</option><option value="29" selected>29 × 29</option><option value="40">40 × 40</option><option value="50">50 × 50</option><option value="60">60 × 60</option></select>')+
+field(id,"Tamanho final desejado",'<select data-key="targetCm"><option value="6">Pequenininho · até 6 cm</option><option value="8" selected>Compacto · até 8 cm</option><option value="10">Médio · até 10 cm</option><option value="12">Até 12 cm</option><option value="15">Até 15 cm</option><option value="20">Até 20 cm</option><option value="custom">Outro tamanho</option></select>')+
+field(id,"Grade de miçangas",'<select data-key="size"><option value="auto" selected>Automática pelo tamanho</option><option value="10">10 × 10</option><option value="12">12 × 12</option><option value="15">15 × 15</option><option value="20">20 × 20</option><option value="29">29 × 29</option><option value="40">40 × 40</option><option value="50">50 × 50</option><option value="60">60 × 60</option></select>')+
+field(id,"Cores do molde",'<select data-key="k"><option>6</option><option>8</option><option>12</option><option selected>16</option><option>24</option><option>32</option></select>')+
 field(id,"Cores do molde",'<select data-key="k"><option>6</option><option>8</option><option>12</option><option selected>16</option><option>24</option><option>32</option></select>')+
 field(id,"Miçanga",'<select data-key="bead"><option value="5">Midi · 5 mm</option><option value="2.6">Mini · 2,6 mm</option><option value="custom">Personalizado</option></select>')+
 field(id,"Enquadramento",'<select data-key="zoom"><option value="1">Encaixar foto</option><option value="1.2">Aproximar 1,2×</option><option value="1.5">Aproximar 1,5×</option><option value="2">Aproximar 2×</option></select>')+'</div>'+
@@ -77,6 +79,7 @@ field(id,"Tamanho sugerido",'<select data-key="hintSize"><option value="0">Escol
 '<label>Mover para cima/baixo <input type="range" data-key="shiftY" min="-40" max="40" value="0"></label>'+
 '</div></details></section>'+
 '<div class="smallpreview" id="cutout-wrap-'+id+'" hidden><canvas id="cutout-'+id+'" aria-label="Imagem com fundo removido"></canvas><div><b>Prévia do recorte ♡</b><small>Confira antes do molde. O PNG mantém a transparência quando o fundo for removido.</small><button class="btn" data-action="cutout">↓ PNG recortado</button></div></div>'+
+'<div class="size-goal" id="size-goal-'+id+'"><div class="size-goal-title">♡ Sua arte do tamanhinho que você quiser</div><label class="custom-cm" id="custom-cm-wrap-'+id+'" hidden>Máximo em centímetros: <input type="number" min="3" max="30" step="0.5" data-key="customCm" value="8" inputmode="decimal"></label><div id="size-explain-'+id+'" class="size-explain">Peça compacta de até 8 cm no lado maior, com miçangas Midi.</div><div class="size-advice" id="size-advice-'+id+'">Quanto menor a peça, menos detalhes cabem. Para manter detalhes em tamanho menor, escolha Mini de 2,6 mm.</div><div class="footprint" id="footprint-'+id+'"></div></div>'+
 '<div class="sizes">Tamanho personalizado: <input data-key="customBead" type="number" min=".5" max="20" step=".1" value="5" aria-label="Diâmetro em milímetros" style="width:60px;border:1px solid #ecdbe0;border-radius:7px;padding:6px" /> mm <span id="physical-'+id+'"></span></div>'+
 '<div class="extra-settings"><label class="check"><input type="checkbox" data-key="grid" checked> Grade numerada</label><label class="check"><input type="checkbox" data-key="beads" checked> Miçanguinhas</label><label class="check"><input type="checkbox" data-key="erase" checked> Remover fundo</label></div>'+
 '<div class="preview"><div class="empty" id="empty-'+id+'"><span>✿</span><b>Uma foto, mil lembranças</b><small>Sua arte vai aparecer aqui ♡</small></div><canvas class="board hidden" id="canvas-'+id+'" aria-label="Molde de Hama Beads"></canvas></div><div class="boardhint" id="hint-'+id+'">Escolha uma foto para começar.</div>'+
@@ -91,16 +94,33 @@ function mount(){const workspace=$("workspace");workspace.classList.toggle("duo"
 function wire(b){const parent=$("panel-"+b.index);
 $("file-"+b.index).addEventListener("change",e=>loadImage(b,e.target.files?.[0]));
 parent.querySelectorAll("[data-key]").forEach(el=>el.addEventListener("change",()=>{
-let key=el.dataset.key;
-let value=el.type==="checkbox"?el.checked:(["style","paletteMode"].includes(key)?el.value:Number(el.value));
-if(key==="size"){b.w=b.h=value;}else if(key==="hintSize"){if(value)b.w=b.h=value;}else if(key==="bead"){b.bead=el.value==="custom"?"custom":Number(el.value);}else b[key]=value;
-if(["size","k","zoom","erase","style","paletteMode","bgTolerance","autoCrop","outline","cleanup","cropTop","cropBottom","cropLeft","cropRight","shiftX","shiftY","hintSize"].includes(key))convert(b);else refresh(b);
-sync(b);
+  const key=el.dataset.key;
+  let value=el.type==="checkbox"?el.checked:(
+    ["style","paletteMode"].includes(key)||key==="size"||key==="targetCm"?el.value:Number(el.value));
+  if(key==="size"){
+    if(value==="auto"){b.sizeMode="physical";}
+    else{b.sizeMode="manual";b.w=b.h=Number(value);}
+  }else if(key==="targetCm"){
+    b.sizeMode="physical";
+    if(value==="custom")b.targetCm=Number(b.customCm||8);
+    else b.targetCm=Number(value);
+  }else if(key==="customCm"){
+    b.customCm=Math.max(3,Math.min(30,Number(value)||8));
+    b.targetCm=b.customCm;
+    b.sizeMode="physical";
+  }else if(key==="hintSize"){
+    if(value){b.sizeMode="manual";b.w=b.h=Number(value);}
+  }else if(key==="bead"){
+    b.bead=value==="custom"?"custom":Number(value);
+  }else b[key]=value;
+  if(["size","targetCm","customCm","hintSize","bead","customBead","k","zoom","erase","style","paletteMode","bgTolerance","autoCrop","outline","cleanup","cropTop","cropBottom","cropLeft","cropRight","shiftX","shiftY"].includes(key))convert(b);
+  else refresh(b);
+  sync(b);
 }));
 parent.querySelectorAll("[data-action]").forEach(el=>el.addEventListener("click",()=>{const action=el.dataset.action;if(action==="tool"){b.tool=el.dataset.tool;parent.querySelectorAll('[data-action="tool"]').forEach(btn=>btn.classList.toggle("on",btn.dataset.tool===b.tool));message(b.tool==="paint"?"Toque numa miçanguinha para trocar sua cor.":"Toque para marcar as miçanguinhas prontas.");}if(action==="clear"){b.done.clear();refresh(b);}if(action==="png")savePNG(b);if(action==="pdf")savePDF(b);if(action==="cutout")saveCutout(b);}));
 $("canvas-"+b.index).addEventListener("click",e=>onBoardClick(b,e));
 }
-function sync(b){const el=$("panel-"+b.index);if(!el)return;el.querySelector('[data-key="size"]').value=String(b.w);el.querySelector('[data-key="k"]').value=String(b.k);el.querySelector('[data-key="bead"]').value=String(b.bead);el.querySelector('[data-key="zoom"]').value=String(b.zoom);for(const key of ["grid","beads","erase","autoCrop","outline","cleanup"])el.querySelector('[data-key="'+key+'"]').checked=b[key];for(const key of ["style","paletteMode","bgTolerance","cropTop","cropBottom","cropLeft","cropRight","shiftX","shiftY"])el.querySelector('[data-key="'+key+'"]').value=String(b[key]);el.querySelector('[data-key="customBead"]').value=b.customBead;el.querySelectorAll('[data-action="tool"]').forEach(btn=>btn.classList.toggle("on",btn.dataset.tool===b.tool));if(b.url){$("thumb-"+b.index).src=b.url;$("thumb-"+b.index).classList.add("visible");$("file-name-"+b.index).textContent=b.imgName;} }
+function sync(b){const el=$("panel-"+b.index);if(!el)return;el.querySelector('[data-key="size"]').value=b.sizeMode==="physical"?"auto":String(b.w);const cmSelector=el.querySelector('[data-key="targetCm"]');cmSelector.value=[6,8,10,12,15,20].includes(b.targetCm)&&b.targetCm!==b.customCm?String(b.targetCm):(b.targetCm===8?"8":"custom");el.querySelector('[data-key="customCm"]').value=b.customCm;el.querySelector('[data-key="k"]').value=String(b.k);el.querySelector('[data-key="bead"]').value=String(b.bead);el.querySelector('[data-key="zoom"]').value=String(b.zoom);for(const key of ["grid","beads","erase","autoCrop","outline","cleanup"])el.querySelector('[data-key="'+key+'"]').checked=b[key];for(const key of ["style","paletteMode","bgTolerance","cropTop","cropBottom","cropLeft","cropRight","shiftX","shiftY"])el.querySelector('[data-key="'+key+'"]').value=String(b[key]);el.querySelector('[data-key="customBead"]').value=b.customBead;el.querySelector("#custom-cm-wrap-"+b.index).hidden=cmSelector.value!=="custom";el.querySelectorAll('[data-action="tool"]').forEach(btn=>btn.classList.toggle("on",btn.dataset.tool===b.tool));if(b.url){$("thumb-"+b.index).src=b.url;$("thumb-"+b.index).classList.add("visible");$("file-name-"+b.index).textContent=b.imgName;} }
 function renderEmpty(b){const id=b.index;$("empty-"+id).style.display="block";$("canvas-"+id).classList.add("hidden");updateStats(b);}
 async function loadImage(b,file){if(!file)return;if(!file.type.startsWith("image/")){message("Escolha um arquivo de imagem, tá? ♡");return;}if(file.size>25*1024*1024){message("Essa foto é grande demais (limite: 25 MB).");return;}const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{if(b.url)URL.revokeObjectURL(b.url);b.url=url;b.img=img;b.imgName=file.name;b.done.clear();sync(b);convert(b);message("Fotinha carregada! Agora é só montar ♡");};img.onerror=()=>{URL.revokeObjectURL(url);message("Não consegui abrir essa foto. Tente JPG ou PNG.");};img.src=url;}
 function prepare(b){const {w,h,img}=b;const base=document.createElement("canvas");base.width=w;base.height=h;const c=base.getContext("2d",{willReadFrequently:true});c.clearRect(0,0,w,h);c.imageSmoothingEnabled=true;c.imageSmoothingQuality="high";const ratio=Math.min(w/img.naturalWidth,h/img.naturalHeight)*b.zoom;const iw=img.naturalWidth*ratio,ih=img.naturalHeight*ratio;c.drawImage(img,(w-iw)/2,(h-ih)/2,iw,ih);const raw=c.getImageData(0,0,w,h).data;const result=[];const bgCanvas=document.createElement("canvas");bgCanvas.width=2;bgCanvas.height=2;const cx=bgCanvas.getContext("2d");cx.drawImage(img,0,0,2,2);const sample=cx.getImageData(0,0,2,2).data;const bg=[sample[0],sample[1],sample[2]];for(let i=0;i<raw.length;i+=4){const a=raw[i+3];const rgb=[raw[i],raw[i+1],raw[i+2]];const dist=Math.hypot(rgb[0]-bg[0],rgb[1]-bg[1],rgb[2]-bg[2]);result.push(a<130||b.erase&&dist<b.tolerance?-1:rgb);}return result;}
@@ -109,10 +129,40 @@ for(let iter=0;iter<12;iter++){const sums=means.map(()=>[0,0,0,0]);for(const p o
 const out=items.map(p=>p===-1?-1:nearest(p,means));const used=[...new Set(out.filter(n=>n>=0))];const map=new Map(used.map((n,i)=>[n,i]));return {palette:used.map(i=>means[i].map(v=>clamp(Math.round(v),0,255))),pixels:out.map(n=>n<0?-1:map.get(n))};}
 function dist2(a,b){return (a[0]-b[0])**2+(a[1]-b[1])**2+(a[2]-b[2])**2;}
 function nearest(p,centers){let best=0,d=Infinity;for(let i=0;i<centers.length;i++){const test=dist2(p,centers[i]);if(test<d){d=test;best=i;}}return best;}
-function convert(b){if(!b.img)return renderEmpty(b);
-try{const source=window.PixelEngine.process(b),result=quantize(source.items,b.k),finished=window.PixelEngine.finish(b,result,source);
-b.pixels=finished.pixels;b.palette=finished.palette;b.cutout=finished.cutout;b.done.clear();refresh(b);drawCutoutPreview(b);
-}catch(e){console.error("Erro ao criar molde",e);message("Não consegui converter. Tente outra foto ou desative Remover fundo.");}
+function getBeadMm(b){return b.bead==="custom"?Number(b.customBead):Number(b.bead);}
+function applyTargetSize(b,aspect){
+  const diameter=getBeadMm(b);
+  if(!Number.isFinite(diameter)||diameter<=0)return;
+  const maxCells=Math.max(3,Math.min(120,Math.floor((Number(b.targetCm)||8)*10/diameter+1e-9)));
+  const ratio=Number.isFinite(aspect)&&aspect>0?aspect:1;
+  if(ratio>=1){b.w=maxCells;b.h=Math.max(3,Math.min(maxCells,Math.round(maxCells/ratio)));}
+  else{b.h=maxCells;b.w=Math.max(3,Math.min(maxCells,Math.round(maxCells*ratio)));}
+}
+function estimateBounds(b){
+  const width=b.img.naturalWidth,height=b.img.naturalHeight;
+  const widthPct=Math.max(.02,1-(Number(b.cropLeft||0)+Number(b.cropRight||0))/100);
+  const heightPct=Math.max(.02,1-(Number(b.cropTop||0)+Number(b.cropBottom||0))/100);
+  return width*widthPct/(height*heightPct);
+}
+function convert(b){
+  if(!b.img){
+    if(b.sizeMode==="physical")applyTargetSize(b,1);
+    return renderEmpty(b);
+  }
+  try{
+    if(b.sizeMode==="physical")applyTargetSize(b,estimateBounds(b));
+    let source=window.PixelEngine.process(b);
+    if(b.sizeMode==="physical"&&source.cutout){
+      const actualRatio=source.cutout.width/source.cutout.height;
+      const oldW=b.w,oldH=b.h;
+      applyTargetSize(b,actualRatio);
+      if(b.w!==oldW||b.h!==oldH)source=window.PixelEngine.process(b);
+    }
+    const result=quantize(source.items,b.k);
+    const finished=window.PixelEngine.finish(b,result,source);
+    b.pixels=finished.pixels;b.palette=finished.palette;b.cutout=finished.cutout;
+    b.done.clear();refresh(b);drawCutoutPreview(b);
+  }catch(e){console.error("Erro ao criar molde",e);message("Não consegui converter. Tente outra foto ou desative Remover fundo.");}
 }
 function drawCutoutPreview(b){const wrap=$("cutout-wrap-"+b.index),c=$("cutout-"+b.index);
 if(!wrap||!b.cutout)return;wrap.hidden=false;c.width=140;c.height=140;
@@ -225,7 +275,31 @@ function drawCanvas(b,canvas,cell,forExport=false){
   }
 }
 function refresh(b){const el=$("panel-"+b.index);if(!el)return;const canvas=$("canvas-"+b.index);if(!b.img||!b.pixels.length){renderEmpty(b);return;} $("empty-"+b.index).style.display="none";canvas.classList.remove("hidden");drawCanvas(b,canvas,Math.max(11,Math.floor(650/Math.max(b.w,b.h))));$("hint-"+b.index).textContent=b.tool==="mark"?"Toque numa miçanguinha para ver linha e coluna ♡":"Toque para mudar a cor · números mostram a posição ✎";updateStats(b);el.querySelectorAll('[data-action="png"],[data-action="pdf"]').forEach(btn=>btn.disabled=false);}
-function updateStats(b){const id=b.index,counts=new Map();let total=0;for(const p of b.pixels){if(p>=0){counts.set(p,(counts.get(p)||0)+1);total++;}}const d=b.bead==="custom"?b.customBead:Number(b.bead);const w=(b.w*d/10).toLocaleString("pt-BR",{maximumFractionDigits:2});const h=(b.h*d/10).toLocaleString("pt-BR",{maximumFractionDigits:2});$("count-"+id).textContent=total.toLocaleString("pt-BR");$("dimensions-"+id).textContent=w+" × "+h;$("colornum-"+id).textContent=counts.size;$("physical-"+id).textContent="≈ "+w+" × "+h+" cm";const finished=[...b.done].filter(i=>b.pixels[i]>=0).length;const pct=total?Math.round(finished/total*100):0;$("progress-"+id).style.width=pct+"%";$("pct-"+id).textContent=pct+"%";const list=$("palette-"+id);if(!counts.size){list.innerHTML='<small style="color:#b594a0">Aparece depois de converter a fotinha.</small>';return;}list.innerHTML=[...counts.entries()].sort((a,c)=>c[1]-a[1]).map(([idx,n])=>'<div class="swatch" title="'+rgb(b.palette[idx])+'"><i style="background:'+rgb(b.palette[idx])+'"></i>'+n+'</div>').join("");}
+function occupiedSize(b){
+  let left=b.w,top=b.h,right=-1,bottom=-1;
+  for(let y=0;y<b.h;y++)for(let x=0;x<b.w;x++){
+    if(b.pixels[y*b.w+x]>=0){left=Math.min(left,x);right=Math.max(right,x);top=Math.min(top,y);bottom=Math.max(bottom,y);}
+  }
+  return right<0?null:{w:right-left+1,h:bottom-top+1};
+}
+function updateSizeExplanation(b){
+  const id=b.index,d=getBeadMm(b),num=n=>n.toLocaleString("pt-BR",{maximumFractionDigits:1});
+  const out=$("size-explain-"+id),advice=$("size-advice-"+id),footprint=$("footprint-"+id);
+  if(!out||!Number.isFinite(d)||d<=0)return;
+  const cw=b.w*d/10,ch=b.h*d/10;
+  out.textContent=(b.sizeMode==="physical"?"Tamanho máximo escolhido: "+num(b.targetCm)+" cm. ":"Grade escolhida manualmente. ")+
+    "Molde: "+b.w+" × "+b.h+" miçangas (≈ "+num(cw)+" × "+num(ch)+" cm).";
+  const shape=occupiedSize(b);
+  if(shape){
+    footprint.textContent="Peça ocupada por miçangas: aproximadamente "+num(shape.w*d/10)+" × "+num(shape.h*d/10)+" cm.";
+  }else{
+    footprint.textContent="O tamanho real da peça aparecerá depois que você carregar a foto.";
+  }
+  advice.textContent=b.sizeMode==="physical"&&Math.min(b.w,b.h)<18?
+    "♡ Essa grade é bem pequena. Traços finos podem sumir. Mini 2,6 mm permite mais miçangas no mesmo espaço.":
+    "♡ Quanto menor a peça, menos detalhes cabem. Para manter detalhes em tamanho menor, escolha Mini de 2,6 mm.";
+}
+function updateStats(b){const id=b.index,counts=new Map();let total=0;for(const p of b.pixels){if(p>=0){counts.set(p,(counts.get(p)||0)+1);total++;}}const d=getBeadMm(b);const w=(b.w*d/10).toLocaleString("pt-BR",{maximumFractionDigits:2});const h=(b.h*d/10).toLocaleString("pt-BR",{maximumFractionDigits:2});$("count-"+id).textContent=total.toLocaleString("pt-BR");$("dimensions-"+id).textContent=w+" × "+h;$("colornum-"+id).textContent=counts.size;$("physical-"+id).textContent="≈ "+w+" × "+h+" cm";updateSizeExplanation(b);const finished=[...b.done].filter(i=>b.pixels[i]>=0).length;const pct=total?Math.round(finished/total*100):0;$("progress-"+id).style.width=pct+"%";$("pct-"+id).textContent=pct+"%";const list=$("palette-"+id);if(!counts.size){list.innerHTML='<small style="color:#b594a0">Aparece depois de converter a fotinha.</small>';return;}list.innerHTML=[...counts.entries()].sort((a,c)=>c[1]-a[1]).map(([idx,n])=>'<div class="swatch" title="'+rgb(b.palette[idx])+'"><i style="background:'+rgb(b.palette[idx])+'"></i>'+n+'</div>').join("");}
 function onBoardClick(b,e){
   const canvas=e.currentTarget,rect=canvas.getBoundingClientRect();
   const margin=Number(canvas.dataset.gridMargin||0);
