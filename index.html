@@ -78,7 +78,7 @@ field(id,"Tamanho sugerido",'<select data-key="hintSize"><option value="0">Escol
 '</div></details></section>'+
 '<div class="smallpreview" id="cutout-wrap-'+id+'" hidden><canvas id="cutout-'+id+'" aria-label="Imagem com fundo removido"></canvas><div><b>Prévia do recorte ♡</b><small>Confira antes do molde. O PNG mantém a transparência quando o fundo for removido.</small><button class="btn" data-action="cutout">↓ PNG recortado</button></div></div>'+
 '<div class="sizes">Tamanho personalizado: <input data-key="customBead" type="number" min=".5" max="20" step=".1" value="5" aria-label="Diâmetro em milímetros" style="width:60px;border:1px solid #ecdbe0;border-radius:7px;padding:6px" /> mm <span id="physical-'+id+'"></span></div>'+
-'<div class="extra-settings"><label class="check"><input type="checkbox" data-key="grid" checked> Grade</label><label class="check"><input type="checkbox" data-key="beads" checked> Miçanguinhas</label><label class="check"><input type="checkbox" data-key="erase" checked> Remover fundo</label></div>'+
+'<div class="extra-settings"><label class="check"><input type="checkbox" data-key="grid" checked> Grade numerada</label><label class="check"><input type="checkbox" data-key="beads" checked> Miçanguinhas</label><label class="check"><input type="checkbox" data-key="erase" checked> Remover fundo</label></div>'+
 '<div class="preview"><div class="empty" id="empty-'+id+'"><span>✿</span><b>Uma foto, mil lembranças</b><small>Sua arte vai aparecer aqui ♡</small></div><canvas class="board hidden" id="canvas-'+id+'" aria-label="Molde de Hama Beads"></canvas></div><div class="boardhint" id="hint-'+id+'">Escolha uma foto para começar.</div>'+
 '<div class="utility"><button class="on" data-action="tool" data-tool="mark">✓ Marcar prontas</button><button data-action="tool" data-tool="paint">✎ Trocar cor</button><button data-action="clear">↻ Limpar marcações</button></div>'+
 '<div class="stats"><div class="stat"><b id="count-'+id+'">0</b><span>miçangas</span></div><div class="stat"><b id="dimensions-'+id+'">14,5 × 14,5</b><span>centímetros</span></div><div class="stat"><b id="colornum-'+id+'">0</b><span>cores usadas</span></div></div>'+
@@ -126,10 +126,124 @@ document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjec
 },"image/png");
 }
 function rgb(p){return "rgb("+p.join(",")+")";}
-function drawCanvas(b,canvas,cell,forExport=false){canvas.width=b.w*cell;canvas.height=b.h*cell;const c=canvas.getContext("2d");c.clearRect(0,0,canvas.width,canvas.height);if(forExport){c.fillStyle="#ffffff";c.fillRect(0,0,canvas.width,canvas.height);}for(let y=0;y<b.h;y++){for(let x=0;x<b.w;x++){const n=y*b.w+x,idx=b.pixels[n];if(idx===undefined||idx<0)continue;const col=rgb(b.palette[idx]);const px=x*cell,py=y*cell;if(b.beads){c.beginPath();c.fillStyle="rgba(92,58,63,.13)";c.arc(px+cell*.53,py+cell*.54,cell*.44,0,Math.PI*2);c.fill();c.beginPath();c.fillStyle=col;c.arc(px+cell*.5,py+cell*.49,cell*.425,0,Math.PI*2);c.fill();c.beginPath();c.fillStyle="rgba(255,255,255,.65)";c.arc(px+cell*.39,py+cell*.34,cell*.10,0,Math.PI*2);c.fill();c.beginPath();c.fillStyle="rgba(40,20,28,.23)";c.arc(px+cell*.5,py+cell*.49,cell*.115,0,Math.PI*2);c.fill();c.beginPath();c.fillStyle="rgba(255,255,255,.5)";c.arc(px+cell*.5,py+cell*.49,cell*.062,0,Math.PI*2);c.fill();}else{c.fillStyle=col;c.fillRect(px,py,cell,cell);}if(!forExport&&b.done.has(n)){c.fillStyle="rgba(255,255,255,.73)";c.fillRect(px,py,cell,cell);c.fillStyle="#9a657a";c.font="bold "+Math.max(10,cell*.65)+"px sans-serif";c.textAlign="center";c.textBaseline="middle";c.fillText("✓",px+cell/2,py+cell/2);}}}if(b.grid){c.strokeStyle="rgba(114,78,90,.18)";c.lineWidth=Math.max(.5,cell/28);c.beginPath();for(let x=0;x<=b.w;x++){c.moveTo(x*cell+.5,0);c.lineTo(x*cell+.5,b.h*cell);}for(let y=0;y<=b.h;y++){c.moveTo(0,y*cell+.5);c.lineTo(b.w*cell,y*cell+.5);}c.stroke();}}
-function refresh(b){const el=$("panel-"+b.index);if(!el)return;const canvas=$("canvas-"+b.index);if(!b.img||!b.pixels.length){renderEmpty(b);return;} $("empty-"+b.index).style.display="none";canvas.classList.remove("hidden");drawCanvas(b,canvas,Math.max(11,Math.floor(650/Math.max(b.w,b.h))));$("hint-"+b.index).textContent=b.tool==="mark"?"Toque nas miçanguinhas que já colocou ♡":"Toque para mudar a cor de uma miçanguinha ✎";updateStats(b);el.querySelectorAll('[data-action="png"],[data-action="pdf"]').forEach(btn=>btn.disabled=false);}
+function drawCanvas(b,canvas,cell,forExport=false){
+  // O espaço reservado aos números fica fora das posições das miçangas.
+  const margin=b.grid?Math.max(28,Math.round(cell*1.5)):0;
+  canvas.width=b.w*cell+margin;
+  canvas.height=b.h*cell+margin;
+  canvas.dataset.gridMargin=String(margin);
+  canvas.dataset.gridCell=String(cell);
+  const c=canvas.getContext("2d");
+  c.clearRect(0,0,canvas.width,canvas.height);
+  if(forExport){
+    c.fillStyle="#ffffff";
+    c.fillRect(0,0,canvas.width,canvas.height);
+  }
+  if(b.grid){
+    c.fillStyle=forExport?"#fff8fa":"rgba(255,242,246,.95)";
+    c.fillRect(0,0,canvas.width,margin);
+    c.fillRect(0,margin,margin,canvas.height-margin);
+  }
+  c.save();
+  c.translate(margin,margin);
+  for(let y=0;y<b.h;y++){
+    for(let x=0;x<b.w;x++){
+      const n=y*b.w+x,idx=b.pixels[n];
+      if(idx===undefined||idx<0)continue;
+      const col=rgb(b.palette[idx]),px=x*cell,py=y*cell;
+      if(b.beads){
+        c.beginPath();c.fillStyle="rgba(92,58,63,.13)";
+        c.arc(px+cell*.53,py+cell*.54,cell*.44,0,Math.PI*2);c.fill();
+        c.beginPath();c.fillStyle=col;
+        c.arc(px+cell*.5,py+cell*.49,cell*.425,0,Math.PI*2);c.fill();
+        c.beginPath();c.fillStyle="rgba(255,255,255,.65)";
+        c.arc(px+cell*.39,py+cell*.34,cell*.10,0,Math.PI*2);c.fill();
+        c.beginPath();c.fillStyle="rgba(40,20,28,.23)";
+        c.arc(px+cell*.5,py+cell*.49,cell*.115,0,Math.PI*2);c.fill();
+        c.beginPath();c.fillStyle="rgba(255,255,255,.5)";
+        c.arc(px+cell*.5,py+cell*.49,cell*.062,0,Math.PI*2);c.fill();
+      }else{
+        c.fillStyle=col;c.fillRect(px,py,cell,cell);
+      }
+      if(!forExport&&b.done.has(n)){
+        c.fillStyle="rgba(255,255,255,.73)";
+        c.fillRect(px,py,cell,cell);
+        c.fillStyle="#9a657a";
+        c.font="bold "+Math.max(10,cell*.65)+"px sans-serif";
+        c.textAlign="center";c.textBaseline="middle";
+        c.fillText("✓",px+cell/2,py+cell/2);
+      }
+    }
+  }
+  if(b.grid){
+    // Quadrículas suaves para cada miçanga.
+    c.beginPath();
+    c.lineWidth=Math.max(.5,cell/28);
+    c.strokeStyle="rgba(114,78,90,.18)";
+    for(let x=0;x<=b.w;x++){
+      const px=x*cell+.5;
+      c.moveTo(px,0);c.lineTo(px,b.h*cell);
+    }
+    for(let y=0;y<=b.h;y++){
+      const py=y*cell+.5;
+      c.moveTo(0,py);c.lineTo(b.w*cell,py);
+    }
+    c.stroke();
+    // Divisórias mais fortes DEPOIS de cada grupo de 5 miçangas.
+    c.beginPath();
+    c.lineWidth=Math.max(1.3,cell/10);
+    c.strokeStyle="rgba(133,72,97,.58)";
+    for(let x=5;x<b.w;x+=5){
+      const px=x*cell;
+      c.moveTo(px,0);c.lineTo(px,b.h*cell);
+    }
+    for(let y=5;y<b.h;y+=5){
+      const py=y*cell;
+      c.moveTo(0,py);c.lineTo(b.w*cell,py);
+    }
+    c.stroke();
+    c.strokeStyle="rgba(133,72,97,.54)";
+    c.lineWidth=Math.max(1,cell/14);
+    c.strokeRect(0,0,b.w*cell,b.h*cell);
+  }
+  c.restore();
+  if(b.grid){
+    // Colunas no topo; linhas na esquerda. Inclui 1 e depois 5,10,15...
+    c.fillStyle="#925d72";
+    c.textAlign="center";
+    c.textBaseline="middle";
+    c.font="700 "+Math.max(12,Math.min(19,Math.round(cell*.66)))+"px sans-serif";
+    for(let x=1;x<=b.w;x++){
+      if(x===1||x%5===0)c.fillText(String(x),margin+(x-.5)*cell,margin*.56);
+    }
+    for(let y=1;y<=b.h;y++){
+      if(y===1||y%5===0)c.fillText(String(y),margin*.50,margin+(y-.5)*cell);
+    }
+    c.fillStyle="#bd8196";
+    c.font="800 "+Math.max(9,Math.round(margin*.31))+"px sans-serif";
+    c.fillText("↘",margin*.5,margin*.53);
+  }
+}
+function refresh(b){const el=$("panel-"+b.index);if(!el)return;const canvas=$("canvas-"+b.index);if(!b.img||!b.pixels.length){renderEmpty(b);return;} $("empty-"+b.index).style.display="none";canvas.classList.remove("hidden");drawCanvas(b,canvas,Math.max(11,Math.floor(650/Math.max(b.w,b.h))));$("hint-"+b.index).textContent=b.tool==="mark"?"Toque numa miçanguinha para ver linha e coluna ♡":"Toque para mudar a cor · números mostram a posição ✎";updateStats(b);el.querySelectorAll('[data-action="png"],[data-action="pdf"]').forEach(btn=>btn.disabled=false);}
 function updateStats(b){const id=b.index,counts=new Map();let total=0;for(const p of b.pixels){if(p>=0){counts.set(p,(counts.get(p)||0)+1);total++;}}const d=b.bead==="custom"?b.customBead:Number(b.bead);const w=(b.w*d/10).toLocaleString("pt-BR",{maximumFractionDigits:2});const h=(b.h*d/10).toLocaleString("pt-BR",{maximumFractionDigits:2});$("count-"+id).textContent=total.toLocaleString("pt-BR");$("dimensions-"+id).textContent=w+" × "+h;$("colornum-"+id).textContent=counts.size;$("physical-"+id).textContent="≈ "+w+" × "+h+" cm";const finished=[...b.done].filter(i=>b.pixels[i]>=0).length;const pct=total?Math.round(finished/total*100):0;$("progress-"+id).style.width=pct+"%";$("pct-"+id).textContent=pct+"%";const list=$("palette-"+id);if(!counts.size){list.innerHTML='<small style="color:#b594a0">Aparece depois de converter a fotinha.</small>';return;}list.innerHTML=[...counts.entries()].sort((a,c)=>c[1]-a[1]).map(([idx,n])=>'<div class="swatch" title="'+rgb(b.palette[idx])+'"><i style="background:'+rgb(b.palette[idx])+'"></i>'+n+'</div>').join("");}
-function onBoardClick(b,e){const canvas=e.currentTarget,rect=canvas.getBoundingClientRect(),x=Math.floor((e.clientX-rect.left)/rect.width*b.w),y=Math.floor((e.clientY-rect.top)/rect.height*b.h);if(x<0||x>=b.w||y<0||y>=b.h)return;const n=y*b.w+x;if(b.pixels[n]<0)return;if(b.tool==="mark"){b.done.has(n)?b.done.delete(n):b.done.add(n);}else{if(b.palette.length)b.pixels[n]=(b.pixels[n]+1)%b.palette.length;b.done.delete(n);}refresh(b);}
+function onBoardClick(b,e){
+  const canvas=e.currentTarget,rect=canvas.getBoundingClientRect();
+  const margin=Number(canvas.dataset.gridMargin||0);
+  const cell=Number(canvas.dataset.gridCell||1);
+  const x=Math.floor(((e.clientX-rect.left)/rect.width*canvas.width-margin)/cell);
+  const y=Math.floor(((e.clientY-rect.top)/rect.height*canvas.height-margin)/cell);
+  if(x<0||x>=b.w||y<0||y>=b.h)return;
+  const n=y*b.w+x,coords="Linha "+(y+1)+" · Coluna "+(x+1);
+  if(b.pixels[n]<0){$("hint-"+b.index).textContent=coords+" · Espaço vazio ♡";return;}
+  if(b.tool==="mark"){
+    b.done.has(n)?b.done.delete(n):b.done.add(n);
+  }else{
+    if(b.palette.length)b.pixels[n]=(b.pixels[n]+1)%b.palette.length;
+    b.done.delete(n);
+  }
+  refresh(b);
+  $("hint-"+b.index).textContent=coords+(b.tool==="mark"?" · Progresso atualizado ♡":" · Cor alterada ✎");
+}
 function exportCanvas(b){const c=document.createElement("canvas");drawCanvas(b,c,32,true);return c;}
 function savePNG(b){if(!b.img)return;exportCanvas(b).toBlob(blob=>{if(!blob)return message("Não consegui salvar o arquivo.");const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="nosso-mundinho-molde-"+(b.index+1)+".png";document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),2000);},"image/png");}
 function savePDF(b){if(!b.img)return;const image=exportCanvas(b).toDataURL("image/png");const counts=new Map();for(const i of b.pixels)if(i>=0)counts.set(i,(counts.get(i)||0)+1);const legend=[...counts.entries()].sort((a,c)=>c[1]-a[1]).map(([i,n])=>'<span style="display:inline-flex;align-items:center;margin:4px 10px 4px 0;font:12px Arial"><i style="display:inline-block;width:13px;height:13px;border:1px solid #ddd;margin-right:5px;background:'+rgb(b.palette[i])+'"></i>'+n+'</span>').join("");const popup=window.open("","_blank");if(!popup){message("Permita pop-ups para salvar o PDF ♡");return;}const d=b.bead==="custom"?b.customBead:Number(b.bead);popup.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Nosso Mundinho - Molde</title><style>@page{size:A4;margin:13mm}body{font-family:Arial,sans-serif;text-align:center;color:#7d4f63}h1{font-size:22px}img{display:block;max-width:100%;max-height:220mm;object-fit:contain;margin:16px auto}.legend{text-align:left;border-top:1px solid #eee;padding-top:9px}</style></head><body><h1>Maria & Vítor · Nosso Mundinho ♡</h1><p>'+b.w+' × '+b.h+' · '+d+' mm · '+[...counts.values()].reduce((a,n)=>a+n,0)+' miçangas</p><img src="'+image+'"><div class="legend"><strong>Miçangas por cor</strong><br>'+legend+'</div><p style="font-size:10px">Feito com amor ♡</p><script>window.onload=()=>setTimeout(()=>window.print(),300)<\/script></body></html>');popup.document.close();}
